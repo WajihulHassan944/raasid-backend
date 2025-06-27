@@ -1,35 +1,4 @@
-import XLSX from 'xlsx';
 import City from '../models/City.js';
-
-// Upload Excel file and store city data in MongoDB
-export const uploadCitiesFromExcel = async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-
-    const workbook = XLSX.readFile(req.file.path);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rawData = XLSX.utils.sheet_to_json(sheet);
-
-    // Normalize keys to match Mongoose schema
-    const normalizedData = rawData.map((row) => ({
-      cityId: row.CITYID,
-      cityName: row.CITYNAME,
-      cityCode: row.CITYCODE,
-      area: row.AREA,
-      region: row.REGION,
-    }));
-
-    await City.deleteMany({});
-    await City.insertMany(normalizedData);
-
-    res.status(200).json({ message: 'Cities uploaded successfully', inserted: normalizedData.length });
-  } catch (err) {
-    console.error('Error uploading cities:', err);
-    res.status(500).json({ message: 'Failed to upload cities', error: err.message });
-  }
-};
 
 
 // Determine zone based on origin (Nowshera) and destination
