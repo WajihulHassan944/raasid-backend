@@ -5,6 +5,8 @@ import { transporter } from "../utils/mailer.js";
 import dotenv from "dotenv";
 import { createTcsBooking } from "./tcsController.js";
 import { User } from "../models/user.js";
+import bcrypt from 'bcryptjs';
+
 dotenv.config({ path: "./data/config.env" });
 
 const {
