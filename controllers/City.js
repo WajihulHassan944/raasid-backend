@@ -47,6 +47,27 @@ export const resolveZone = async (req, res) => {
   }
 };
 
+export const getAllCityNames = async (req, res) => {
+  try {
+    const cities = await City.find({}, 'cityName'); // only fetch cityName field
+    const cityNames = cities.map(city => city.cityName);
+
+    res.status(200).json({
+      success: true,
+      cities: cityNames,
+    });
+  } catch (err) {
+    console.error('Error fetching city names:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch city names',
+      error: err.message,
+    });
+  }
+};
+
+
+
 // Determine zone and calculate shipping fee (params-based version)
 export const resolveZoneWithRate = async (req, res) => {
   try {
