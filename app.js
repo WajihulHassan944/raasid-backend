@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:3001","http://localhost:3000" ,"https://raasid-x-go.vercel.app"],
+    origin: ["http://localhost:3001","http://localhost:3000" ,"https://raasid-x-go.vercel.app", "https://raasid.com", "https://www.raasid.com"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
   })

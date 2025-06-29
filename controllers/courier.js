@@ -77,6 +77,48 @@ export const getTariff = async (req, res, next) => {
   }
 };
 
+export const getTariffWithAllData = async (req, res) => {
+  const { weight } = req.query;
+
+  if (!weight) {
+    return res.status(400).json({ message: "Missing weight in grams" });
+  }
+
+  try {
+    const token = await getToken(); // assume you have this function defined
+    console.log("📦 Getting tariff for weight (grams):", weight);
+
+    const response = await fetch(`${PAK_POST_PROD_URL}/GetTariff`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ weightingrams: weight }),
+    });
+
+    const data = await response.json();
+    console.log("📦 Tariff API response:", data);
+
+    if (!response.ok || data.status !== 200) {
+      return res.status(500).json({ 
+        message: data.message || "Failed to get tariff", 
+        raw: data 
+      });
+    }
+
+    return res.status(200).json({
+      totalCharges: data.totalCharges,
+      raw: data // include full API response
+    });
+  } catch (err) {
+    console.error("❌ Tariff Error:", err.message);
+    return res.status(500).json({ message: err.message || "Server Error" });
+  }
+};
+
+
+
 export const getCourierStatusByArticle = (req, res, next) => {
   const { articleTrackingNo } = req.params;
   getToken()

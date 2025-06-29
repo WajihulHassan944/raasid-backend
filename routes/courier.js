@@ -6,6 +6,7 @@ import {
   getCourierStatusByArticle,
   getCourierStatusByOrder,
   getTariff,
+  getTariffWithAllData,
 } from "../controllers/courier.js";
 import { getTcsShippingFee, testTcsTokenTestTwo, trackTcsShipment } from "../controllers/tcsController.js";
 
@@ -16,6 +17,7 @@ router.get("/transaction", getAllCouriers);
 router.put("/transaction/:id", updateCourier);
 router.delete("/transaction/:id", deleteCourier);
 router.get("/tariff", getTariff);
+router.get("/get-tariff", getTariffWithAllData);
 router.get("/tcs/track/:cnNumber", trackTcsShipment);
 router.post("/tcs/fee", getTcsShippingFee);
 router.get("/status/:articleTrackingNo", getCourierStatusByArticle);
