@@ -300,20 +300,32 @@ export const getAllOrders = async (req, res, next) => {
   }
 };
 
-// Get Order by ID
+
 export const getOrderById = async (req, res, next) => {
   try {
-    const order = await Orders.findById(req.params.id).populate("products.productId");
+    const orderId = req.params.id;
+
+    const order = await Orders.findById(orderId)
+      .populate("products.productId");
+
     if (!order) return next(new ErrorHandler("Order not found", 404));
+
+    const courier = await CourierTransaction.findOne({ order: orderId });
 
     res.status(200).json({
       success: true,
-      order
+      order,
+      courier, // ✅ Include courier data
     });
   } catch (error) {
     next(error);
   }
 };
+
+
+
+
+
 // Get Orders by User ID
 export const getOrdersByUserId = async (req, res, next) => {
   try {
