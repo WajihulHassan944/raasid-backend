@@ -6,6 +6,9 @@ import dotenv from "dotenv";
 import { createTcsBooking } from "./tcsController.js";
 import { User } from "../models/user.js";
 import bcrypt from 'bcryptjs';
+import { Products } from "../models/products.js";
+import { Category } from "../models/category.js";
+import { Inquiry } from "../models/inquiry.js";
 
 dotenv.config({ path: "./data/config.env" });
 
@@ -303,19 +306,22 @@ export const getAllOrders = async (req, res, next) => {
 
 export const getOrderById = async (req, res, next) => {
   try {
-    const orderId = req.params.id;
-
-    const order = await Orders.findById(orderId)
+    const order = await Orders.findById(req.params.id)
       .populate("products.productId");
 
-    if (!order) return next(new ErrorHandler("Order not found", 404));
+    if (!order) {
+      return next(new ErrorHandler("Order not found", 404));
+    }
 
-    const courier = await CourierTransaction.findOne({ order: orderId });
+    // Use ppTransactionId to find matching courier record
+    const courier = await CourierTransaction.findOne({
+      saleId: order.ppTransactionId,
+    });
 
     res.status(200).json({
       success: true,
       order,
-      courier, // ✅ Include courier data
+      courier, // includes courier matched by saleId
     });
   } catch (error) {
     next(error);
@@ -374,6 +380,77 @@ export const deleteOrder = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Order deleted successfully"
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+
+
+
+export const getDashboardAnalytics = async (req, res, next) => {
+  try {
+    // 🧾 Order counts by status
+    const [
+      cancelledOrders,
+      pendingOrders,
+      processingOrders,
+      shippedOrders,
+      deliveredOrders,
+      totalOrders
+    ] = await Promise.all([
+      Orders.countDocuments({ status: "Cancelled" }),
+      Orders.countDocuments({ status: "Pending" }),
+      Orders.countDocuments({ status: "Processing" }),
+      Orders.countDocuments({ status: "Shipped" }),
+      Orders.countDocuments({ status: "Delivered" }),
+      Orders.countDocuments()
+    ]);
+
+    // 🛒 Total products
+    const totalProducts = await Products.countDocuments();
+
+    // 🗂️ Total categories
+    const totalCategories = await Category.countDocuments();
+
+    // 📊 Products count by category
+    const productsByCategory = await Products.aggregate([
+      {
+        $group: {
+          _id: "$category",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          category: "$_id",
+          count: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    // 📥 Total inquiries
+    const totalInquiries = await Inquiry.countDocuments();
+
+    // ✅ Response
+    res.status(200).json({
+      success: true,
+      stats: {
+        cancelledOrders,
+        pendingOrders,
+        processingOrders,
+        shippedOrders,
+        deliveredOrders,
+        totalOrders,
+        totalProducts,
+        totalCategories,
+        totalInquiries,
+        productsByCategory,
+      }
     });
   } catch (error) {
     next(error);
