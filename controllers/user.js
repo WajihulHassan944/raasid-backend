@@ -2,6 +2,7 @@ import { User } from '../models/user.js';
 import ErrorHandler from '../middlewares/error.js';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
+import jwt from 'jsonwebtoken';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_EMAIL_PASS = process.env.ADMIN_EMAIL_PASS;
@@ -39,7 +40,6 @@ export const signup = async (req, res, next) => {
       role,
     });
 
-    // Send email if role includes subadmin
     if (role.includes('subadmin')) {
       const mailOptions = {
         from: `"Admin" <${ADMIN_EMAIL}>`,

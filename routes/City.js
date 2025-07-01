@@ -8,4 +8,5 @@ router.get('/resolve-zone/:originCity/:destinationCity/:weight', resolveZoneWith
 router.get('/all-cities', getAllCityNames);
 router.get('/resolve-shipping-fee/:destinationCity/:weight', autoResolveZoneWithRate);
 router.get('/', getAllCities);
+
 export default router;
