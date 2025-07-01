@@ -3,7 +3,7 @@ import ErrorHandler from '../middlewares/error.js';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
-
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key'; 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_EMAIL_PASS = process.env.ADMIN_EMAIL_PASS;
 
