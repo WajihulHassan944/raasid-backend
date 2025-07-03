@@ -11,10 +11,104 @@ const {
   TCS_TRACKING_URL,
   TCS_ECOM_TOKEN 
 } = process.env;
+export const cancelTcsBooking = async (req, res) => {
+  const { consignmentNumber } = req.body;
+
+  if (!consignmentNumber) {
+    return res.status(400).json({ success: false, message: "❌ Consignment number is required." });
+  }
+
+  try {
+    const { bearerToken, accessToken } = await getTcsTokenTest();
+
+    const payload = {
+      consignmentNumber,
+      accesstoken: accessToken,
+    };
+
+    const response = await fetch("https://connect.tcscourier.com/ecom/api/booking/cancel", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${bearerToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("🚫 TCS Cancel Booking Response:", data);
+
+    if (!response.ok || data.message?.toLowerCase() !== "success") {
+      return res.status(500).json({
+        success: false,
+        message: data?.message || "❌ Failed to cancel booking.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: data.message,
+      traceId: data.traceid,
+    });
+
+  } catch (err) {
+    const safeMessage = err?.message || String(err) || "❌ Unknown error during TCS booking cancellation.";
+    console.error("❌ TCS Booking Cancellation Failed:", safeMessage);
+
+    return res.status(500).json({
+      success: false,
+      message: safeMessage,
+    });
+  }
+};
 
 
-export const createTcsBooking = async ({ fullName, address, city, phone, email, weight, totalAmount }) => {
+export const createTcsBooking = async ({ fullName, address, city, phone, email, weight, totalAmount, originCity }) => {
   const cityCode = city;
+  const isRawalpindi = originCity?.toLowerCase() === "rawalpindi";
+const shipperinfo = isRawalpindi
+  ? {
+      tcsaccount: TCS_ACCOUNT_NO,
+      shippername: "Raasid Store",
+      address1: "Executive office Ground Floor G-04, Rawat Technology Park",
+      address2: "Rawalpindi",
+      address3: "Punjab, Pakistan",
+      zip: "46000",
+      countrycode: "PK",
+      countryname: "Pakistan",
+      cityname: "RAWALPINDI",
+      mobile: "03349333101"
+    }
+  : {
+      tcsaccount: TCS_ACCOUNT_NO,
+      shippername: "Raasid Store",
+      address1: "mre project, care of headquarter ASC center",
+      address2: "Nowshera",
+      address3: "KPK",
+      zip: "24110",
+      countrycode: "PK",
+      countryname: "Pakistan",
+      cityname: "NOWSHERA",
+      mobile: "03349333101"
+    };
+
+const vendorinfo = isRawalpindi
+  ? {
+      name: "Raasid Vendor",
+      address1: "Executive office Ground Floor G-04, Rawat Technology Park",
+      address2: "Rawalpindi",
+      address3: "Punjab, Pakistan",
+      cityname: "RAWALPINDI",
+      mobile: "03349333101"
+    }
+  : {
+      name: "Raasid Vendor",
+      address1: "mre project, ASC center",
+      address2: "Nowshera",
+      address3: "KPK",
+      cityname: "NOWSHERA",
+      mobile: "03349333101"
+    };
   if (!cityCode) {
     throw new Error(`❌ Unsupported city: ${city}`);
   }
@@ -29,27 +123,9 @@ export const createTcsBooking = async ({ fullName, address, city, phone, email, 
 
   const payload = {
     accesstoken: accessToken,
-     shipperinfo: {
-  tcsaccount: TCS_ACCOUNT_NO,
-  shippername: "Raasid Store",
-  address1: "mre project, care of headquarter ASC center",
-  address2: "Nowshera",
-  address3: "KPK",
-  zip: "24110", 
-  countrycode: "PK",
-  countryname: "Pakistan",
-  cityname: "NOWSHERA",
-  mobile: "03349333101"
-},
-vendorinfo: {
-  name: "Raasid Vendor",
-  address1: "mre project, ASC center",
-  address2: "Nowshera",
-  address3: "KPK",
-  cityname: "NOWSHERA",
-  mobile: "03349333101"
-},
-    consigneeinfo: {
+      shipperinfo,
+      vendorinfo,
+      consigneeinfo: {
       firstname: fullName,
       middlename: fullName,
       lastname: "",
@@ -61,7 +137,7 @@ vendorinfo: {
       email: email
     },
     shipmentinfo: {
-  costcentercode: "01",
+  costcentercode: isRawalpindi ? "05" : "01",
   referenceno: Math.floor(100000000 + Math.random() * 900000000).toString(),
   contentdesc: "Online order from Raasid Store",
   servicecode: "O",
@@ -128,6 +204,19 @@ vendorinfo: {
     raw
   };
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
 export const trackTcsShipment = async (req, res, next) => {
   const { cnNumber } = req.params;
 
@@ -396,3 +485,5 @@ export const testTcsTokenTestTwo = async (req, res, next) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+

@@ -100,7 +100,7 @@ export const createOrder = async (req, res, next) => {
       totalAmount,
       weight,
       shippingFee,
-    } = req.body;
+     originCity } = req.body;
 
     if (
       !email || !fullName || !address || !city || !phone ||
@@ -165,6 +165,7 @@ export const createOrder = async (req, res, next) => {
           fullName,
           address,
           city,
+          originCity,
           phone,
           email,
           weight,

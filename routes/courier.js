@@ -8,7 +8,7 @@ import {
   getTariff,
   getTariffWithAllData,
 } from "../controllers/courier.js";
-import { getTcsShippingFee, testTcsTokenTestTwo, trackTcsShipment } from "../controllers/tcsController.js";
+import { cancelTcsBooking, getTcsShippingFee, testTcsTokenTestTwo, trackTcsShipment } from "../controllers/tcsController.js";
 import { getDashboardAnalytics } from "../controllers/order.js";
 
 const router = express.Router();
@@ -20,6 +20,7 @@ router.delete("/transaction/:id", deleteCourier);
 router.get("/tariff", getTariff);
 router.get("/get-tariff", getTariffWithAllData);
 router.get("/tcs/track/:cnNumber", trackTcsShipment);
+router.post("/tcs/cancel", cancelTcsBooking);
 router.post("/tcs/fee", getTcsShippingFee);
 router.get("/status/:articleTrackingNo", getCourierStatusByArticle);
 router.get("/orderTracking/:transactionId/:articleTrackingNo", getCourierStatusByOrder);
