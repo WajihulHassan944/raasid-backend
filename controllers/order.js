@@ -295,14 +295,31 @@ export const createOrder = async (req, res, next) => {
 export const getAllOrders = async (req, res, next) => {
   try {
     const orders = await Orders.find().populate("products.productId");
+
+    // For each order, find the corresponding courier transaction and attach ppOrderId
+    const enrichedOrders = await Promise.all(
+      orders.map(async (order) => {
+        const courier = await CourierTransaction.findOne({
+          saleId: order.ppTransactionId,
+        });
+
+        // Convert to plain object so we can safely mutate it
+        const orderObj = order.toObject();
+        orderObj.ppOrderId = courier?.ppOrderId || null;
+
+        return orderObj;
+      })
+    );
+
     res.status(200).json({
       success: true,
-      orders
+      orders: enrichedOrders,
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 
 export const getOrderById = async (req, res, next) => {
