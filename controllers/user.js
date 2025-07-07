@@ -193,29 +193,28 @@ export const getAllSubadmins = async (req, res, next) => {
 
 
 
-
 export const resetPassword = async (req, res, next) => {
   try {
-    const { userId } = req.user || req.body; // assuming you're using auth middleware
-    const { currentPassword, newPassword } = req.body;
+    const { email, currentPassword, newPassword } = req.body;
 
-    if (!userId || !currentPassword || !newPassword) {
+    if (!email || !currentPassword || !newPassword) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Fetch user with password
-    const user = await User.findById(userId).select("+password");
+    // Find user by email with password field included
+    const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Compare current password
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Current password is incorrect" });
     }
 
-    // Hash new password
+    // Hash and update new password
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedNewPassword;
 
