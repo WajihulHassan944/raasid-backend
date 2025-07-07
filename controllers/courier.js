@@ -202,3 +202,85 @@ export const deleteCourier = (req, res, next) => {
       next(new ErrorHandler("Deletion failed", 500));
     });
 };
+
+
+export const getOrderByPPTransactionId = async (req, res, next) => {
+  try {
+    const { ppTransactionId } = req.params;
+
+    if (!ppTransactionId) {
+      return res.status(400).json({ error: "ppTransactionId is required" });
+    }
+
+    const order = await Orders.findOne({ ppTransactionId })
+      .populate({
+        path: "products.productId",
+        select: "name image price packaging category serving", // Pick fields you need
+      })
+      .lean();
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const courier = await CourierTransaction.findOne({ order: order._id }).lean();
+
+    return res.status(200).json({ order, courier });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+export const updateArticleTrackingNo = async (req, res, next) => {
+  try {
+    const { courierId } = req.params;
+    const { articleTrackingNo } = req.body;
+
+    if (!articleTrackingNo) {
+      return res.status(400).json({ error: "articleTrackingNo is required" });
+    }
+
+    const courier = await CourierTransaction.findByIdAndUpdate(
+      courierId,
+      { articleTrackingNo },
+      { new: true }
+    ).populate("order");
+
+    if (!courier) {
+      return res.status(404).json({ error: "Courier record not found" });
+    }
+
+    const order = courier.order;
+    if (!order || !order.email) {
+      return res.status(400).json({ error: "Associated order not found or missing email" });
+    }
+
+    // Send tracking email to the user
+    await transporter.sendMail({
+      from: `"Support Team" <${process.env.ADMIN_EMAIL}>`,
+      to: order.email,
+      subject: `Tracking Number for Your Order`,
+      html: `
+        <p>Dear ${order.fullName},</p>
+        <p>Your order has been updated with a tracking number.</p>
+        <p><strong>Courier:</strong> ${order.shippingMethod}</p>
+        <p><strong>Tracking Number:</strong> ${articleTrackingNo}</p>
+        <p>You can use this number to track your shipment on the courier's website.</p>
+        <br/>
+        <p>Thank you for shopping with us!</p>
+        <p>Best regards,<br/>Customer Support, Raasid</p>
+      `,
+    });
+
+    return res.status(200).json({
+      message: "Tracking number updated and email sent",
+      courier,
+    });
+  } catch (error) {
+    console.error("Error updating tracking number:", error);
+    next(error);
+  }
+};
+
