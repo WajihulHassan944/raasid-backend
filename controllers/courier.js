@@ -2,7 +2,7 @@ import CourierTransaction from "../models/courier.js";
 import { Orders } from "../models/order.js";
 import ErrorHandler from "../middlewares/error.js";
 import dotenv from "dotenv";
-
+import { transporter } from "../utils/mailer.js";
 dotenv.config({ path: "./data/config.env" });
 const {
   PAK_POST_PROD_URL,
@@ -274,13 +274,15 @@ export const updateArticleTrackingNo = async (req, res, next) => {
       `,
     });
 
+    // ✅ Log confirmation in console
+    console.log(`✅ Tracking number updated and email sent to ${order.email}`);
+
     return res.status(200).json({
       message: "Tracking number updated and email sent",
       courier,
     });
   } catch (error) {
-    console.error("Error updating tracking number:", error);
+    console.error("❌ Error updating tracking number:", error);
     next(error);
   }
 };
-
