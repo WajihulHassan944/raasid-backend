@@ -184,6 +184,37 @@ export const deleteProduct = async (req, res, next) => {
   }
 };
 
+// Get Product by Last 5 Characters of ID
+export const getProductByShortId = async (req, res, next) => {
+  try {
+    const shortId = req.params.shortId;
+
+    if (!shortId || shortId.length !== 5) {
+      return res.status(400).json({ error: "Invalid shortId" });
+    }
+
+    // Fetch all products (you could optimize by projecting only needed fields)
+    const products = await Products.find({}, "name packaging price _id");
+
+    // Filter in JS (not MongoDB)
+    const matched = products.find((product) =>
+      product._id.toString().endsWith(shortId)
+    );
+
+    if (!matched) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    res.status(200).json({
+      name: matched.name,
+      packaging: matched.packaging,
+      price: matched.price,
+    });
+  } catch (error) {
+    console.error("❌ Error in getProductByShortId:", error);
+    next(error);
+  }
+};
 
 
 export const getAllProducts = async (req, res, next) => {

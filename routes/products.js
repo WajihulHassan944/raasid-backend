@@ -4,6 +4,7 @@ import {
   deleteProduct,
   getAllProducts,
   getProductById,
+  getProductByShortId,
   updateProduct,
 
 } from "../controllers/products.js";
@@ -29,5 +30,8 @@ router.put("/update/:id", upload.single("image"),  updateProduct);
 
 // Delete product by ID
 router.delete("/:id", deleteProduct);
+
+router.get("/get-by-posId/:shortId", getProductByShortId);
+
 
 export default router;
