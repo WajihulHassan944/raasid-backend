@@ -190,3 +190,39 @@ export const getAllSubadmins = async (req, res, next) => {
     next(error);
   }
 };
+
+
+
+
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { userId } = req.user || req.body; // assuming you're using auth middleware
+    const { currentPassword, newPassword } = req.body;
+
+    if (!userId || !currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // Fetch user with password
+    const user = await User.findById(userId).select("+password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    // Hash new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    next(error);
+  }
+};

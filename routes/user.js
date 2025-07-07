@@ -1,5 +1,5 @@
 import express from 'express';
-import { signup, login, updateUser, deleteUser, getAllUsers, getAllSubadmins } from '../controllers/user.js';
+import { signup, login, updateUser, deleteUser, getAllUsers, getAllSubadmins, resetPassword } from '../controllers/user.js';
 
 const router = express.Router();
 
@@ -11,5 +11,6 @@ router.put('/update/:id', updateUser);
 router.delete('/delete/:id', deleteUser);
 router.get('/all', getAllUsers);
 router.get('/subadmins', getAllSubadmins);
+router.post("/reset-password", resetPassword);
 
 export default router;
