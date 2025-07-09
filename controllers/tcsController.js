@@ -137,7 +137,7 @@ const vendorinfo = isRawalpindi
       email: email
     },
     shipmentinfo: {
-  costcentercode: isRawalpindi ? "05" : "01",
+  costcentercode: isRawalpindi ? "04" : "01",
   referenceno: Math.floor(100000000 + Math.random() * 900000000).toString(),
   contentdesc: "Online order from Raasid Store",
   servicecode: "O",
