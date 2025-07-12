@@ -474,3 +474,94 @@ export const getDashboardAnalytics = async (req, res, next) => {
     next(error);
   }
 };
+// Update Order Status by ppTransactionId
+export const updateOrderStatusByPPTransactionId = async (req, res, next) => {
+  try {
+     const { ppTransactionId } = req.params;
+    const {  status } = req.body;
+
+    // Find order by ppTransactionId
+    const order = await Orders.findOne({ ppTransactionId });
+    if (!order) return next(new ErrorHandler("Order not found", 404));
+
+    // Update status
+    order.status = status || order.status;
+    await order.save();
+
+    // Destructure order data
+    const { fullName, email, phone, address, city, shippingMethod, paymentMethod, products, totalAmount, trackingNumber } = order;
+
+    // Prepare product summary
+    const productSummary = products?.map(p => {
+      return `<p>${p.name} - ${p.quantity} x ${p.price} PKR</p>`;
+    }).join("") || "";
+
+    // Tracking details if available
+    const trackingDetails = trackingNumber
+      ? `<p><strong>Tracking Number:</strong> ${trackingNumber}</p>`
+      : "";
+
+    // Custom status message
+    let statusMessage = "";
+    switch (status) {
+      case "Pending":
+        statusMessage = `<p>Your order is <strong>pending</strong> and will be processed shortly. We're just getting everything ready for you!</p>`;
+        break;
+      case "Processing":
+        statusMessage = `<p>Your order is now <strong>being processed</strong>. Our team is preparing your items with care.</p>`;
+        break;
+      case "Shipped":
+        statusMessage = `<p>Great news! Your order has been <strong>shipped</strong> and is on its way to you.</p>`;
+        break;
+      case "Delivered":
+        statusMessage = `<p>Your order has been <strong>delivered</strong>. We hope you enjoy your purchase!</p>`;
+        break;
+      case "Cancelled":
+        statusMessage = `<p>We’re sorry to inform you that your order has been <strong>cancelled</strong>. If this was unexpected, please contact us.</p>`;
+        break;
+      default:
+        statusMessage = `<p>Your order status has been updated to <strong>${status}</strong>.</p>`;
+    }
+
+    const emailHtml = `
+      <h3>Hello ${fullName},</h3>
+      ${statusMessage}
+      <hr>
+      <h4>📦 Order Summary</h4>
+      <p><strong>Name:</strong> ${fullName}</p>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Phone:</strong> ${phone}</p>
+      <p><strong>Address:</strong> ${address}, ${city}</p>
+      <p><strong>Shipping Method:</strong> ${shippingMethod}</p>
+      <p><strong>Payment Method:</strong> ${paymentMethod}</p>
+      <p><strong>Products:</strong><br>${productSummary}</p>
+      <p><strong>Total Amount:</strong> ${totalAmount} PKR</p>
+      ${trackingDetails}
+      <hr>
+      <p>Thank you for shopping with <strong>Raasid</strong>. If you have any questions, feel free to reply to this email.</p>
+    `;
+
+    // 📧 Email notifications
+    await transporter.sendMail({
+      from: `"Raasid Store" <${ADMIN_EMAIL}>`,
+      to: email,
+      subject: `Your Raasid Order Update – Status: ${order.status}`,
+      html: emailHtml,
+    });
+
+    await transporter.sendMail({
+      from: `"Raasid Store" <${ADMIN_EMAIL}>`,
+      to: ADMIN_EMAIL,
+      subject: `Order Status Updated – ${fullName}`,
+      html: `<h3>Order status changed to "<strong>${order.status}</strong>" for ${fullName}</h3>${emailHtml}`,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Order status updated and confirmation emails sent",
+      order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

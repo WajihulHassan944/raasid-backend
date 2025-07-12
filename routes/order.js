@@ -6,12 +6,14 @@ import {
   updateOrderStatus,
   deleteOrder,
   getOrdersByUserId,
+  updateOrderStatusByPPTransactionId,
 } from "../controllers/order.js";
 
 const router = express.Router();
 
 router.post("/create", createOrder);
 router.get("/", getAllOrders);
+router.put("/updateOrderStatus/:ppTransactionId", updateOrderStatusByPPTransactionId);
 router.get("/:id", getOrderById);
 router.put("/:id/status", updateOrderStatus);
 router.delete("/:id", deleteOrder);
