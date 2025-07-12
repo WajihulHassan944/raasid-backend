@@ -534,7 +534,6 @@ export const updateOrderStatusByPPTransactionId = async (req, res, next) => {
       <p><strong>Address:</strong> ${address}, ${city}</p>
       <p><strong>Shipping Method:</strong> ${shippingMethod}</p>
       <p><strong>Payment Method:</strong> ${paymentMethod}</p>
-      <p><strong>Products:</strong><br>${productSummary}</p>
       <p><strong>Total Amount:</strong> ${totalAmount} PKR</p>
       ${trackingDetails}
       <hr>
