@@ -170,6 +170,7 @@ export const createOrder = async (req, res, next) => {
           email,
           weight,
           totalAmount,
+          products,
         });
 
         courierData = {

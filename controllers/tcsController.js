@@ -63,7 +63,7 @@ export const cancelTcsBooking = async (req, res) => {
 };
 
 
-export const createTcsBooking = async ({ fullName, address, city, phone, email, weight, totalAmount, originCity }) => {
+export const createTcsBooking = async ({ fullName, address, city, phone, email, weight, totalAmount, originCity , products  }) => {
   const cityCode = city;
   const isRawalpindi = originCity?.toLowerCase() === "rawalpindi";
 const shipperinfo = isRawalpindi
@@ -151,18 +151,17 @@ const vendorinfo = isRawalpindi
   pieces: 1,
   fragile: false,
   remarks: "Booking created via API",
-  skus: [
-    {
-      description: "General Item",
-      quantity: 1,
-      weight: (Number(weight) / 1000).toFixed(2),
-      uom: "KG",
-      unitprice: totalAmount,
-      declaredvalue: totalAmount || 1000,  // ✅
-      insuredvalue: totalAmount || 1000,   // ✅
-      hscode: "GEN123"                     // Optional but good
-    }
-  ],
+ skus: products.map((p) => ({
+  description: p.productId?.name || "Unnamed Product",
+  quantity: p.quantity,
+  weight: (Number(weight) / 1000).toFixed(2), // or use p.productId.weight if individual product weights exist
+  uom: "KG",
+  unitprice: p.productId?.price || 0,
+  declaredvalue: p.productId?.price || 1000,
+  insuredvalue: p.productId?.price || 1000,
+  hscode: "GEN123"
+})),
+
   piecedetail: [
     {
       length: 10,
