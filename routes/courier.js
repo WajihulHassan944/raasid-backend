@@ -8,7 +8,7 @@ import {
   getTariff,
   getTariffWithAllData,
   getOrderByPPTransactionId,
-  updateArticleTrackingNo,
+  updateTrackingByPPTransactionId,
 } from "../controllers/courier.js";
 import { cancelTcsBooking, getTcsShippingFee, testTcsTokenTestTwo, trackTcsShipment } from "../controllers/tcsController.js";
 import { getDashboardAnalytics } from "../controllers/order.js";
@@ -27,9 +27,7 @@ router.post("/tcs/fee", getTcsShippingFee);
 router.get("/status/:articleTrackingNo", getCourierStatusByArticle);
 router.get("/orderTracking/:transactionId/:articleTrackingNo", getCourierStatusByOrder);
 router.get("/get-all-analytics", getDashboardAnalytics);
-
 router.get("/pp/:ppTransactionId", getOrderByPPTransactionId);
-router.patch("/:courierId/tracking", updateArticleTrackingNo);
-
+router.patch("/tracking/by-pp-id", updateTrackingByPPTransactionId);
 
 export default router;
