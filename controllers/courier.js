@@ -233,31 +233,30 @@ export const getOrderByPPTransactionId = async (req, res, next) => {
 
 
 
-export const updateArticleTrackingNo = async (req, res, next) => {
+export const updateTrackingByPPTransactionId = async (req, res, next) => {
   try {
-    const { courierId } = req.params;
-    const { articleTrackingNo } = req.body;
+    const { ppTransactionId, articleTrackingNo } = req.body;
 
-    if (!articleTrackingNo) {
-      return res.status(400).json({ error: "articleTrackingNo is required" });
+    if (!ppTransactionId || !articleTrackingNo) {
+      return res.status(400).json({ error: "ppTransactionId and articleTrackingNo are required" });
     }
 
-    const courier = await CourierTransaction.findByIdAndUpdate(
-      courierId,
+    const order = await Orders.findOne({ ppTransactionId });
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found with given ppTransactionId" });
+    }
+
+    const courier = await CourierTransaction.findOneAndUpdate(
+      { order: order._id },
       { articleTrackingNo },
       { new: true }
-    ).populate("order");
+    );
 
     if (!courier) {
-      return res.status(404).json({ error: "Courier record not found" });
+      return res.status(404).json({ error: "Courier transaction not found for this order" });
     }
 
-    const order = courier.order;
-    if (!order || !order.email) {
-      return res.status(400).json({ error: "Associated order not found or missing email" });
-    }
-
-    // Send tracking email to the user
     await transporter.sendMail({
       from: `"Support Team" <${process.env.ADMIN_EMAIL}>`,
       to: order.email,
@@ -274,13 +273,13 @@ export const updateArticleTrackingNo = async (req, res, next) => {
       `,
     });
 
-    // ✅ Log confirmation in console
     console.log(`✅ Tracking number updated and email sent to ${order.email}`);
 
     return res.status(200).json({
       message: "Tracking number updated and email sent",
       courier,
     });
+
   } catch (error) {
     console.error("❌ Error updating tracking number:", error);
     next(error);
