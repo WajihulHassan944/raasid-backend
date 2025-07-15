@@ -72,11 +72,12 @@ export const getAllInquiries = async (req, res) => {
     res.status(500).json({ success: false, message: "Unable to fetch inquiries." });
   }
 };
-export const replyToInquiry = async (req, res) => {
-  const { email, name, replyMessage } = req.body;
 
-  if (!email || !replyMessage) {
-    return res.status(400).json({ success: false, message: "Email and reply message are required." });
+export const replyToInquiry = async (req, res) => {
+  const { email, name, replyMessage, inquiryId } = req.body;
+
+  if (!email || !replyMessage || !inquiryId) {
+    return res.status(400).json({ success: false, message: "Email, reply message, and inquiry ID are required." });
   }
 
   try {
@@ -93,7 +94,13 @@ export const replyToInquiry = async (req, res) => {
     };
 
     await transporter.sendMail(mailOptions);
-    res.status(200).json({ success: true, message: "Reply sent successfully." });
+
+    // Save reply in the database
+    await Inquiry.findByIdAndUpdate(inquiryId, {
+      reply: replyMessage,
+    });
+
+    res.status(200).json({ success: true, message: "Reply sent and saved successfully." });
 
   } catch (error) {
     console.error("Error sending reply:", error);
