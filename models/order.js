@@ -37,11 +37,13 @@ const orderSchema = new mongoose.Schema({
     enum: ["cod", "card"],
     required: true,
   },
+  bookingDate: { type: String, default: "" },
+  consignmentStatusDate: { type: String, default: "" },
   products: [orderProductSchema],
   totalAmount: { type: Number, required: true },
   status: {
     type: String,
-    enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"],
+    enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled","Booked","Return"],
     default: "Pending",
   },
 }, { timestamps: true });

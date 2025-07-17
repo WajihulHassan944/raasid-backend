@@ -28,6 +28,6 @@ router.get("/status/:articleTrackingNo", getCourierStatusByArticle);
 router.get("/orderTracking/:transactionId/:articleTrackingNo", getCourierStatusByOrder);
 router.get("/get-all-analytics", getDashboardAnalytics);
 router.get("/pp/:ppTransactionId", getOrderByPPTransactionId);
-router.patch("/tracking/by-pp-id", updateTrackingByPPTransactionId);
+router.patch("/updateBookingDetail", updateTrackingByPPTransactionId);
 
 export default router;

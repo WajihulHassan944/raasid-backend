@@ -235,21 +235,28 @@ export const getOrderByPPTransactionId = async (req, res, next) => {
 
 export const updateTrackingByPPTransactionId = async (req, res, next) => {
   try {
-    const { ppTransactionId, articleTrackingNo } = req.body;
+    const { TransactionId, ArticleNo, Status, BookingDate } = req.body;
 
-    if (!ppTransactionId || !articleTrackingNo) {
-      return res.status(400).json({ error: "ppTransactionId and articleTrackingNo are required" });
+    if (!TransactionId || !ArticleNo || !Status || !BookingDate) {
+      return res.status(400).json({ error: "Missing required fields in payload" });
     }
 
-    const order = await Orders.findOne({ ppTransactionId });
+    // 1. Find the order by ppTransactionId
+    const order = await Orders.findOne({ ppTransactionId: TransactionId });
 
     if (!order) {
-      return res.status(404).json({ error: "Order not found with given ppTransactionId" });
+      return res.status(404).json({ error: "Order not found with given TransactionId" });
     }
 
+    // 2. Update order status and booking date
+    order.status = Status;
+    order.bookingDate = BookingDate;
+    await order.save();
+
+    // 3. Update courier's articleTrackingNo
     const courier = await CourierTransaction.findOneAndUpdate(
       { order: order._id },
-      { articleTrackingNo },
+      { articleTrackingNo: ArticleNo },
       { new: true }
     );
 
@@ -257,31 +264,97 @@ export const updateTrackingByPPTransactionId = async (req, res, next) => {
       return res.status(404).json({ error: "Courier transaction not found for this order" });
     }
 
+    // 4. Send email to customer
     await transporter.sendMail({
       from: `"Support Team" <${process.env.ADMIN_EMAIL}>`,
       to: order.email,
-      subject: `Tracking Number for Your Order`,
+      subject: `Your Order Has Been Booked - Tracking Info`,
       html: `
         <p>Dear ${order.fullName},</p>
-        <p>Your order has been updated with a tracking number.</p>
+        <p>Your order has been <strong>booked</strong>.</p>
         <p><strong>Courier:</strong> ${order.shippingMethod}</p>
-        <p><strong>Tracking Number:</strong> ${articleTrackingNo}</p>
-        <p>You can use this number to track your shipment on the courier's website.</p>
+        <p><strong>Tracking Number:</strong> ${ArticleNo}</p>
+        <p><strong>Booking Date:</strong> ${BookingDate}</p>
         <br/>
+        <p>You can use this tracking number to monitor your delivery on the courier's website.</p>
         <p>Thank you for shopping with us!</p>
         <p>Best regards,<br/>Customer Support, Raasid</p>
       `,
     });
 
-    console.log(`✅ Tracking number updated and email sent to ${order.email}`);
+    console.log(`✅ Order booked & tracking email sent to ${order.email}`);
 
     return res.status(200).json({
-      message: "Tracking number updated and email sent",
+      message: "Order updated, tracking number saved, and email sent",
       courier,
     });
 
   } catch (error) {
-    console.error("❌ Error updating tracking number:", error);
+    console.error("❌ Error updating order/tracking:", error);
+    next(error);
+  }
+};
+
+
+
+export const updateDeliveryStatusByPPTransactionId = async (req, res, next) => {
+  try {
+    const { TransactionId, ArticleNo, Status, ConsignmentStatusDate } = req.body;
+
+    if (!TransactionId || !ArticleNo || !Status || !ConsignmentStatusDate) {
+      return res.status(400).json({ error: "Missing required fields in payload" });
+    }
+
+    // 1. Find the order
+    const order = await Orders.findOne({ ppTransactionId: TransactionId });
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found with given TransactionId" });
+    }
+
+    // 2. Update order status and consignment delivery/return date
+    order.status = Status;
+    order.consignmentStatusDate = ConsignmentStatusDate;
+    await order.save();
+
+    // 3. Update courier tracking number (if not already updated)
+    const courier = await CourierTransaction.findOneAndUpdate(
+      { order: order._id },
+      { articleTrackingNo: ArticleNo },
+      { new: true }
+    );
+
+    if (!courier) {
+      return res.status(404).json({ error: "Courier transaction not found for this order" });
+    }
+
+    // 4. Send notification email
+    await transporter.sendMail({
+      from: `"Support Team" <${process.env.ADMIN_EMAIL}>`,
+      to: order.email,
+      subject: `Order ${Status} Notification`,
+      html: `
+        <p>Dear ${order.fullName},</p>
+        <p>Your order has been marked as <strong>${Status}</strong>.</p>
+        <p><strong>Courier:</strong> ${order.shippingMethod}</p>
+        <p><strong>Tracking Number:</strong> ${ArticleNo}</p>
+        <p><strong>Status Date:</strong> ${ConsignmentStatusDate}</p>
+        <br/>
+        <p>If you have any questions, feel free to reply to this email.</p>
+        <p>Thank you for shopping with us!</p>
+        <p>Best regards,<br/>Customer Support, Raasid</p>
+      `,
+    });
+
+    console.log(`✅ Order status updated to ${Status} & email sent to ${order.email}`);
+
+    return res.status(200).json({
+      message: `Order updated as ${Status}, tracking saved, and email sent`,
+      courier,
+    });
+
+  } catch (error) {
+    console.error("❌ Error updating delivery/return status:", error);
     next(error);
   }
 };
