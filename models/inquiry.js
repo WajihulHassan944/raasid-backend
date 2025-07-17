@@ -22,6 +22,10 @@ const inquirySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+     reply: {
+      type: String,
+      default: '',
+    },
   },
   { timestamps: true }
 );
