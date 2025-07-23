@@ -65,7 +65,8 @@ export const cancelTcsBooking = async (req, res) => {
 
 export const createTcsBooking = async ({ fullName, address, city, phone, email, weight, totalAmount, originCity , products  }) => {
   const cityCode = city;
-  const isRawalpindi = originCity?.toLowerCase() === "rawalpindi";
+  // const isRawalpindi = originCity?.toLowerCase() === "rawalpindi";
+  const isRawalpindi = false;
 const shipperinfo = isRawalpindi
   ? {
       tcsaccount: TCS_ACCOUNT_NO,
